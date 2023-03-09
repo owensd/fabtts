@@ -1,0 +1,11 @@
+<!-- Xml UI. See documentation: https://api.tabletopsimulator.com/ui/introUI/ -->
+
+<VerticalLayout height="80" width="150" rectAlignment="UpperLeft" childAlignment="UpperCenter" offsetXY="230 10">
+  <Text width="60" color="white" fontSize="14" fontStyle="Bold">Choose Your Layout</Text>
+  <HorizontalLayout height="40" width="150">
+    <Button onClick="onChangePlayersClicked(2)">2</Button>
+    <Button onClick="onChangePlayersClicked(4)">4</Button>
+    <Button onClick="onChangePlayersClicked(8)">8</Button>
+    <Button id="lock_button" onClick="onAllowMatSelections()">Un- lock</Button>
+  </HorizontalLayout>
+</VerticalLayout>

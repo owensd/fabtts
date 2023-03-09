@@ -1,0 +1,5 @@
+<HorizontalLayout id="panel" width="160" height="40" position="-160 110 -15" rotation="0 0 180" scale="0.25 0.25 0.25">
+  <Button width="40" onClick="onSelectPreviousMat">Prev</Button>
+  <InputField width="60" onEndEdit="onIndexChanged" id="background_index"></InputField>
+  <Button width="40" onClick="onSelectNextMat">Next</Button>
+</HorizontalLayout>

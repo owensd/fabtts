@@ -1,0 +1,20 @@
+<Panel rotation="0 0 180" position="0 0 -11" width="734" height="180">
+  <Panel scale="0.5 0.5 0.5" rectAlignment="UpperLeft" offsetXY="0 0">
+
+    <!-- Card/Deck Input -->
+    <InputField onValueChanged="onDeckInputChanged"
+      width="240" height="34" rectAlignment="UpperLeft" offsetXY="0 0"
+      placeholder="FABDB ID, DECK URL, or CARD ID"></InputField>
+
+    <!-- Card/Deck Button -->
+    <Panel position="-247 34 10" width="240" height="40">
+      <Button onClick="onLoadDeckFromFABDBPressed"
+        width="80" height="40" rectAlignment="UpperLeft" offsetXY="0 0">fabdb.net</Button>
+      <Button onClick="onLoadDeckFromGenericURLPressed"
+        width="80" height="40" rectAlignment="UpperLeft" offsetXY="80 0">TPZ</Button>
+      <Button onClick="onLoadSingleCardPressed"
+        width="80" height="40" rectAlignment="UpperLeft" offsetXY="160 0">card id</Button>
+    </Panel>
+
+  </Panel>
+</Panel>
