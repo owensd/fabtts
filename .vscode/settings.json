@@ -1,0 +1,12 @@
+{
+    "Lua.diagnostics.globals": [
+        "Global",
+        "getObjectFromGUID",
+        "self",
+        "spawnObject",
+        "WebRequest",
+        "log",
+        "JSON",
+        "broadcastToAll"
+    ]
+}
