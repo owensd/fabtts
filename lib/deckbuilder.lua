@@ -487,3 +487,30 @@ function DBOnLoadSingleCardPressed()
         end
     end
 end
+
+local function _hasValue(seq, value)
+    for _, d in ipairs(seq) do
+        if d == value then
+            return true
+        end
+    end
+
+    return false
+end
+
+function DBOnSpawnTokensPressed()
+    -- Some tokens are available in multiple sets so keep track and only spawn the first one found.
+    local names = {}
+
+    for cardID, card in pairs(OSCCardDB) do
+        local isToken = false
+        local types = card.types:split(",")
+        isToken = _hasValue(types, "Token")
+
+        if isToken and not _hasValue(names, card.name) then
+            table.insert(names, card.name)
+            card.cardIdentifier = cardID
+            spawnHero(card, 1, nil)
+        end
+    end
+end

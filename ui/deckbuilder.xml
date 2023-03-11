@@ -14,6 +14,8 @@
         width="240" height="40" rectAlignment="UpperLeft" offsetXY="0 -40">fabdb.net</Button>
       <Button onClick="DBOnLoadSingleCardPressed"
         width="240" height="40" rectAlignment="UpperLeft" offsetXY="0 -80">card id</Button>
+      <Button onClick="DBOnSpawnTokensPressed"
+        width="240" height="40" rectAlignment="UpperLeft" offsetXY="0 -225">tokens</Button>
     </Panel>
 
   </Panel>
