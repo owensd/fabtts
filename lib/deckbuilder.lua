@@ -14,6 +14,7 @@ These follow the format defined here: https://gist.github.com/owensd/af086ac73d2
 require('lib/strings')
 require('lib/fabrary')
 require('lib/fabdb')
+require('lib/carddb')
 
 -- dev_mode_enabled = false
 
