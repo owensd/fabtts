@@ -199,8 +199,14 @@ local function spawnCard(cardOrIdentifier, position, rotation, backFaceURL)
         -- get the card data to spawn it
         -- retrieveCardFromFabDBAPI(cardOrIdentifier:upper(), position, rotation, backFaceURL)
         local cardID = cardOrIdentifier:upper()
-        FABDBGetCardFromIdentifier(cardOrIdentifier:upper(), function(card) _spawnCard(card, position, rotation, backFaceURL, cardID) end)
-        return
+
+        local cardData = OSCCardDB[cardID]
+        if cardData ~= nil then
+            _spawnCard(cardData, position, rotation, backFaceURL)
+        else
+            FABDBGetCardFromIdentifier(cardOrIdentifier:upper(), function(card) _spawnCard(card, position, rotation, backFaceURL, cardID) end)
+            return
+        end
     end
 
     return _spawnCard(cardOrIdentifier, position, rotation, backFaceURL)
