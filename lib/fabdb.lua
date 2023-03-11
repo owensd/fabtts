@@ -32,6 +32,9 @@ function FABDBGetCardFromIdentifier(identifier, fn)
                 print("Unable to load card: " .. identifier)
             else
                 local data = JSON.decode(sanitizeJSON(request.text))
+
+                -- fabdb.net uses a different `identifier` for cards...
+                data.cardIdentifier = identifier
                 fn(data)
             end
         end

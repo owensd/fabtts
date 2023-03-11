@@ -30,6 +30,8 @@ local gDeckBuilderSpawnBaselineXOffset = -0.25
 local gDeckBuilderSpawnHeight = 1.25
 local gDeckBuilderCardHeightOffset = 0.2
 
+local gDeckBuilderDefaultCardScale = { x = 1.5, y = 1.0, z = 1.5 }
+
 local function getCardPositionForGenericCard(cardNumber)
     local pos = deckBuilderUI.getPosition()
     local position = {
@@ -39,8 +41,9 @@ local function getCardPositionForGenericCard(cardNumber)
     }
     local rotation = { x=0, y=90, z=180 }
     return {
-        ["position"] = position,
-        ["rotation"] = rotation
+        position = position,
+        rotation = rotation,
+        scale = gDeckBuilderDefaultCardScale
     }
 end
 
@@ -53,8 +56,9 @@ local function getCardPositionForHeroCard(cardNumber)
     }
     local rotation = { x=0, y=90, z=180 }
     return {
-        ["position"] = position,
-        ["rotation"] = rotation
+        position = position,
+        rotation = rotation,
+        scale = gDeckBuilderDefaultCardScale
     }
 end
 
@@ -67,8 +71,9 @@ local function getCardPositionForWeaponCard(cardNumber)
     }
     local rotation = { x=0, y=90, z=180 }
     return {
-        ["position"] = position,
-        ["rotation"] = rotation
+        position = position,
+        rotation = rotation,
+        scale = gDeckBuilderDefaultCardScale
     }
 end
 
@@ -81,8 +86,9 @@ local function getCardPositionForEquipmentCard(cardNumber)
     }
     local rotation = { x=0, y=90, z=180 }
     return {
-        ["position"] = position,
-        ["rotation"] = rotation
+        position = position,
+        rotation = rotation,
+        scale = gDeckBuilderDefaultCardScale
     }
 end
 
@@ -95,8 +101,9 @@ local function getCardPositionForDeckCard(cardNumber)
     }
     local rotation = { x=0, y=90, z=180 }
     return {
-        ["position"] = position,
-        ["rotation"] = rotation
+        position = position,
+        rotation = rotation,
+        scale = gDeckBuilderDefaultCardScale
     }
 end
 
@@ -109,8 +116,9 @@ local function getCardPositionForSideboardCard(cardNumber)
     }
     local rotation = { x=0, y=90, z=180 }
     return {
-        ["position"] = position,
-        ["rotation"] = rotation
+        position = position,
+        rotation = rotation,
+        scale = gDeckBuilderDefaultCardScale
     }
 end
 
@@ -123,79 +131,105 @@ local function getCardPositionForExtraCard(cardNumber)
     }
     local rotation = { x=0, y=90, z=180 }
     return {
-        ["position"] = position,
-        ["rotation"] = rotation
+        position = position,
+        rotation = rotation,
+        scale = gDeckBuilderDefaultCardScale
     }
 end
 
 
 --[[ CARD SPAWNING --]]
 
-local function _spawnCard(card, position, rotation, backFaceURL, cardID)
-    -- fabdb.net uses a different `identifier` for cards... so use the override if present.
-    if cardID == nil then
-        cardID = card.cardIdentifier:upper()
+local gDeckBuilderCardID = 100
+local function _nextCardID()
+    local id = gDeckBuilderCardID
+    gDeckBuilderCardID = gDeckBuilderCardID + 1
+    return id
+end
+
+local function _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
+    -- Custom overrides for particular card images
+    local cardFaceImageURL = card.image:split("?")[1]
+    cardFaceImageURL = cardFaceImageURL:gsub("webp", "png")
+    if cardID == "ELE000" then
+        cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/1684898660861024963/80840508762EB0CAC1281D3304A06975EB09032F/"
     end
 
-    -- Some cards have special objects created on the game table; those cards should be loaded from there.
-    -- local new_card = loadCardObjectFromGameAssets(cardID, position, rotation, backFaceURL)
-    -- if new_card != nil then
-    --     return new_card
-    -- end
-
-    local cardBack = OSCCardDB[cardID .. "-BACK"]
-    if cardBack ~= nil then
-        backFaceURL = cardBack.image
-    else
+    if backFaceURL == nil then
         backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
+    end
+
+    local cardDescriptionText = card.functionalText
+    if cardDescriptionText == nil then
+        cardDescriptionText = card.text
     end
 
     local isLandscapeCard = false
     local keywords = card.keywords
-    if keywords ~= nil then
-        for _, keyword in pairs(keywords) do
+    if not string.isNilOrEmpty(keywords) then
+        for _, keyword in pairs(string.split(keywords, ",")) do
             if keyword ~= nil and keyword == "landmark" then
                 isLandscapeCard = true
             end
         end
     end
 
-    -- Custom overrides for particular card images
-    local cardFaceImageURL = card["image"]:split("?")[1]
-    cardFaceImageURL = cardFaceImageURL:gsub("webp", "png")
-    if cardID == "ELE000" then
-        cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/1684898660861024963/80840508762EB0CAC1281D3304A06975EB09032F/"
-    end
-
-    local extraObjectInfo = {
-        face = cardFaceImageURL,
-        back = backFaceURL,
-        sideways = isLandscapeCard
+    return {
+        Name = 'Card',
+        Nickname = card.name,
+        Description = cardDescriptionText,
+        Value = 0,
+        Tags = {},
+        Transform = {
+            posX = position.x, posY = position.y, posZ = position.z,
+            rotX = rotation.x, rotY = rotation.y, rotZ = rotation.z,
+            scaleX = scale.x, scaleY = scale.y, scaleZ = scale.z
+        },
+        ColorDiffuse = { r = 1, g = 1, b = 1 },
+        Locked = false,
+        Grid = true,
+        Snap = true,
+        Autoraise = true,
+        Sticky = true,
+        Tooltip = true,
+        GridProjection = false,
+        Hands = true,
+        HideWhenFaceDown = true,
+        XmlUI = '',
+        LuaScript = '',
+        LuaScriptState = '',
+        CardID = _nextCardID(),
+        CustomDeck = {
+            [1] = {
+                FaceURL = cardFaceImageURL,
+                BackURL = backFaceURL,
+                NumWidth = 1,
+                NumHeight = 1,
+                BackIsHidden = true,
+                UniqueBack = true,
+                Type = 0
+            }
+        }
     }
-
-    local cardDescriptionText = card["functionalText"]
-    if cardDescriptionText == nil then
-        cardDescriptionText = card["text"]
-    end
-
-    local objectInfo = {
-        type = "Card",
-        position = position,
-        rotation = rotation,
-        scale = { x = 1.5, y = 1.0, z = 1.5 },
-        callback_function = function(spawnedCard)
-            spawnedCard.setCustomObject(extraObjectInfo)
-            spawnedCard.setName(cardID .. " - " .. card["name"])
-            spawnedCard.setDescription(cardDescriptionText)
-            spawnedCard.reload()
-        end
-    }
-
-    -- Spawn the card!
-    return spawnObject(objectInfo)
 end
 
-local function spawnCard(cardOrIdentifier, position, rotation, backFaceURL)
+local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
+    -- Some cards are double-sided. Instead of spawning multiple cards to hide the back-side, states are used.
+
+    local cardData = _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
+
+    local cardBack = OSCCardDB[cardID .. "-BACK"]
+    if cardBack ~= nil then
+        local cardBackData = _cardMetadata(cardID, cardBack, position, rotation, scale, backFaceURL)
+        cardData["States"] = {
+            [1] = cardBackData
+        }
+    end
+
+    return spawnObjectData({ data = cardData })
+end
+
+local function spawnCard(cardOrIdentifier, position, rotation, scale, backFaceURL)
     -- Cards are dynamically created instead of cloned. This offers greater flexibility and less instances on the table.
 
     if string.isNilOrEmpty(cardOrIdentifier.cardIdentifier) then
@@ -205,50 +239,48 @@ local function spawnCard(cardOrIdentifier, position, rotation, backFaceURL)
 
         local cardData = OSCCardDB[cardID]
         if cardData ~= nil then
-            _spawnCard(cardData, position, rotation, backFaceURL, cardID)
-            return
+            return _spawnCard(cardID, cardData, position, rotation, scale, backFaceURL)
         else
-            FABDBGetCardFromIdentifier(cardOrIdentifier:upper(), function(card) _spawnCard(card, position, rotation, backFaceURL, cardID) end)
-            return
+            return FABDBGetCardFromIdentifier(cardID, function(card) _spawnCard(cardID, card, position, rotation, scale, backFaceURL) end)
         end
     end
 
-    return _spawnCard(cardOrIdentifier, position, rotation, backFaceURL)
+    return _spawnCard(cardOrIdentifier.cardIdentifier:upper(), cardOrIdentifier, position, rotation, scale, backFaceURL)
 end
 
 local function spawnPackCard(card, cardNumber, backFaceURL)
     local pos = getCardPositionForGenericCard(cardNumber)
-    return spawnCard(card, pos.position, pos.rotation, backFaceURL)
+    return spawnCard(card, pos.position, pos.rotation, pos.scale, backFaceURL)
 end
 
 local function spawnHero(card, cardNumber, backFaceURL)
     local pos = getCardPositionForHeroCard(cardNumber)
-    return spawnCard(card, pos.position, pos.rotation, backFaceURL)
+    return spawnCard(card, pos.position, pos.rotation, pos.scale, backFaceURL)
 end
 
 local function spawnWeapon(card, cardNumber, backFaceURL)
     local pos = getCardPositionForWeaponCard(cardNumber)
-    return spawnCard(card, pos.position, pos.rotation, backFaceURL)
+    return spawnCard(card, pos.position, pos.rotation, pos.scale, backFaceURL)
 end
 
 local function spawnEquipment(card, cardNumber, backFaceURL)
     local pos = getCardPositionForEquipmentCard(cardNumber)
-    return spawnCard(card, pos.position, pos.rotation, backFaceURL)
+    return spawnCard(card, pos.position, pos.rotation, pos.scale, backFaceURL)
 end
 
 local function spawnDeck(card, cardNumber, backFaceURL)
     local pos = getCardPositionForDeckCard(cardNumber)
-    return spawnCard(card, pos.position, pos.rotation, backFaceURL)
+    return spawnCard(card, pos.position, pos.rotation, pos.scale, backFaceURL)
 end
 
 local function spawnSideboard(card, cardNumber, backFaceURL)
     local pos = getCardPositionForSideboardCard(cardNumber)
-    return spawnCard(card, pos.position, pos.rotation, backFaceURL)
+    return spawnCard(card, pos.position, pos.rotation, pos.scale, backFaceURL)
 end
 
 local function spawnExtra(card, cardNumber, backFaceURL)
     local pos = getCardPositionForExtraCard(cardNumber)
-    return spawnCard(card, pos.position, pos.rotation, backFaceURL)
+    return spawnCard(card, pos.position, pos.rotation, pos.scale, backFaceURL)
 end
 
 -- lookup table when spawning cards to a specific location.
@@ -335,7 +367,6 @@ end
 ]]
 local function loadDeckFromV2Format(resp)
     local json = sanitizeJSON(resp.text)
-    log(json)
     if type(json) ~= "string" or json:sub(1, 1) ~= "{" then
         broadcastToAll("Unable to retrieve data from URL: " .. gDeckBuilderInput)
         return
