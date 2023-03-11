@@ -7,6 +7,9 @@
         "WebRequest",
         "log",
         "JSON",
-        "broadcastToAll"
+        "broadcastToAll",
+        "OSCCardDB",
+        "spawnObjectData",
+        "Wait"
     ]
 }
