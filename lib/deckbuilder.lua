@@ -143,7 +143,10 @@ local function _spawnCard(card, position, rotation, backFaceURL, cardID)
     --     return new_card
     -- end
 
-    if backFaceURL == nil then
+    local cardBack = OSCCardDB[cardID .. "-BACK"]
+    if cardBack ~= nil then
+        backFaceURL = cardBack.image
+    else
         backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
     end
 
@@ -202,7 +205,8 @@ local function spawnCard(cardOrIdentifier, position, rotation, backFaceURL)
 
         local cardData = OSCCardDB[cardID]
         if cardData ~= nil then
-            _spawnCard(cardData, position, rotation, backFaceURL)
+            _spawnCard(cardData, position, rotation, backFaceURL, cardID)
+            return
         else
             FABDBGetCardFromIdentifier(cardOrIdentifier:upper(), function(card) _spawnCard(card, position, rotation, backFaceURL, cardID) end)
             return
