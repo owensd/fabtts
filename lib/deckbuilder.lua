@@ -141,17 +141,7 @@ end
 
 --[[ CARD SPAWNING --]]
 
-local function _uniqueCardID(cardID)
-    local num = "1" .. string.sub(cardID, 4, 7)
-    for n=1,3 do
-        num = num .. tostring(string.byte(cardID, n))
-    end
-
-    return tonumber(num)
-end
-
 local function _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
-
     local cardFaceImageURL = nil
     local cardFaceImage = OSCImageDB[cardID]
     if cardFaceImage ~= nil then
@@ -168,8 +158,8 @@ local function _cardMetadata(cardID, card, position, rotation, scale, backFaceUR
     end
 
     if backFaceURL == nil then
-        --backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
-        backFaceURL = "http://cloud-3.steamusercontent.com/ugc/1465311478988561488/365997716DD5087410C2FDA5F18293303B5511F5/"
+        backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
+        -- backFaceURL = "http://cloud-3.steamusercontent.com/ugc/1465311478988561488/365997716DD5087410C2FDA5F18293303B5511F5/"
     end
 
     local cardDescriptionText = card.functionalText
@@ -187,43 +177,46 @@ local function _cardMetadata(cardID, card, position, rotation, scale, backFaceUR
         end
     end
 
+    -- return {
+    --     Name = 'Card',
+    --     Nickname = card.name,
+    --     Description = cardDescriptionText,
+    --     Value = 0,
+    --     Tags = {},
+    --     Transform = {
+    --         posX = position.x, posY = position.y, posZ = position.z,
+    --         rotX = rotation.x, rotY = rotation.y, rotZ = rotation.z,
+    --         scaleX = scale.x, scaleY = scale.y, scaleZ = scale.z
+    --     },
+    --     ColorDiffuse = { r = 1, g = 1, b = 1 },
+    --     Locked = false,
+    --     Grid = true,
+    --     Snap = true,
+    --     Autoraise = true,
+    --     Sticky = true,
+    --     Tooltip = true,
+    --     GridProjection = false,
+    --     Hands = true,
+    --     HideWhenFaceDown = true,
+    --     CustomDeck = {
+    --         [1] = {
+    --             FaceURL = cardFaceImageURL,
+    --             BackURL = backFaceURL,
+    --             NumWidth = 1,
+    --             NumHeight = 1,
+    --             BackIsHidden = true,
+    --             UniqueBack = false,
+    --             Type = 0
+    --         }
+    --     }
+    -- }
+
     return {
-        Name = 'Card',
-        Nickname = card.name,
-        Description = cardDescriptionText,
-        Value = 0,
-        Tags = {},
-        Transform = {
-            posX = position.x, posY = position.y, posZ = position.z,
-            rotX = rotation.x, rotY = rotation.y, rotZ = rotation.z,
-            scaleX = scale.x, scaleY = scale.y, scaleZ = scale.z
-        },
-        ColorDiffuse = { r = 1, g = 1, b = 1 },
-        Locked = false,
-        Grid = true,
-        Snap = true,
-        Autoraise = true,
-        Sticky = true,
-        Tooltip = true,
-        GridProjection = false,
-        Hands = true,
-        HideWhenFaceDown = true,
-        XmlUI = '',
-        LuaScript = '',
-        LuaScriptState = '',
-        -- GUID = cardID,
-        -- CardID = _uniqueCardID(cardID),
-        CustomDeck = {
-            [1] = {
-                FaceURL = cardFaceImageURL,
-                BackURL = backFaceURL,
-                NumWidth = 1,
-                NumHeight = 1,
-                BackIsHidden = true,
-                UniqueBack = true,
-                Type = 0
-            }
-        }
+        face = cardFaceImageURL,
+        back = backFaceURL,
+        sideways = isLandscapeCard,
+        name = cardID .. " - " .. card.name,
+        description = cardDescriptionText
     }
 end
 
@@ -231,18 +224,68 @@ local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
     -- Some cards are double-sided. Instead of spawning multiple cards to hide the back-side, states are used.
 
     local cardData = _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
-
     local cardBack = OSCCardDB[cardID .. "-BACK"]
+
+    -- spawnObjectData({ data = cardData }, function(card) log("item spawned") end)
+
+    local frontGUID = spawnObject({
+        type = 'Card',
+        position = position,
+        rotation = rotation,
+        scale = scale,
+        callback_function = function (spawned)
+            spawned.setCustomObject({
+                type = 0,
+                face = cardData.face,
+                back = cardData.back,
+                sideways = cardData.sideways
+            })
+            spawned.setName(cardData.name)
+            spawned.setDescription(cardData.description)
+            spawned.reload()
+        end
+    }).getGUID()
+
     if cardBack ~= nil then
-        local cardBackData = _cardMetadata(cardID, cardBack, position, rotation, scale, backFaceURL)
+        local cardBackData = _cardMetadata(cardID .. "-BACK", cardBack, position, rotation, scale, backFaceURL)
         cardData["States"] = {
             [1] = cardBackData
         }
-    end
 
-    Wait.frames(function()
-        spawnObjectData({ data = cardData })
-    end, 10)
+        spawnObject({
+            type = 'Card',
+            position = position,
+            rotation = rotation,
+            scale = scale,
+            callback_function = function (spawned)
+                spawned.setCustomObject({
+                    type = 0,
+                    face = cardBackData.face,
+                    back = cardBackData.back,
+                    sideways = cardBackData.sideways
+                })
+                spawned.setName(cardBackData.name)
+                spawned.setDescription(cardBackData.description)
+                spawned.reload()
+
+                local backGUID = spawned.getGUID()
+
+                local lastState = getObjectFromGUID(frontGUID).getData()
+                lastState["States"] = {
+                    [1] = spawned.getData()
+                }
+
+                spawnObjectData({
+                    data = lastState,
+                    position = position,
+                    callback_function = function()
+                        destroyObject(getObjectFromGUID(backGUID))
+                        destroyObject(getObjectFromGUID(frontGUID))
+                    end
+                })
+            end
+        })
+    end
 end
 
 local function spawnCard(cardOrIdentifier, position, rotation, scale, backFaceURL)

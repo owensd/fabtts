@@ -10,6 +10,7 @@
         "broadcastToAll",
         "OSCCardDB",
         "spawnObjectData",
-        "Wait"
+        "Wait",
+        "destroyObject"
     ]
 }
