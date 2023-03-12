@@ -15,6 +15,7 @@ require('lib/strings')
 require('lib/fabrary')
 require('lib/fabdb')
 require('lib/carddb')
+require('lib/imagedb')
 
 -- dev_mode_enabled = false
 
@@ -140,23 +141,35 @@ end
 
 --[[ CARD SPAWNING --]]
 
-local gDeckBuilderCardID = 100
-local function _nextCardID()
-    local id = gDeckBuilderCardID
-    gDeckBuilderCardID = gDeckBuilderCardID + 1
-    return id
+local function _uniqueCardID(cardID)
+    local num = "1" .. string.sub(cardID, 4, 7)
+    for n=1,3 do
+        num = num .. tostring(string.byte(cardID, n))
+    end
+
+    return tonumber(num)
 end
 
 local function _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
+
+    local cardFaceImageURL = nil
+    local cardFaceImage = OSCImageDB[cardID]
+    if cardFaceImage ~= nil then
+        cardFaceImageURL = cardFaceImage.url
+    else
+        -- cardFaceImageURL = "https://d2h5owxb2ypf43.cloudfront.net/cards/" .. cardID .. ".png"
+        cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/2021591863531608584/C373576B1A7417AE484C84D6C146C36CD3235522/"
+        log("no local image found: " .. cardID)
+    end
+
     -- Custom overrides for particular card images
-    local cardFaceImageURL = card.image:split("?")[1]
-    cardFaceImageURL = cardFaceImageURL:gsub("webp", "png")
     if cardID == "ELE000" then
         cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/1684898660861024963/80840508762EB0CAC1281D3304A06975EB09032F/"
     end
 
     if backFaceURL == nil then
-        backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
+        --backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
+        backFaceURL = "http://cloud-3.steamusercontent.com/ugc/1465311478988561488/365997716DD5087410C2FDA5F18293303B5511F5/"
     end
 
     local cardDescriptionText = card.functionalText
@@ -198,7 +211,8 @@ local function _cardMetadata(cardID, card, position, rotation, scale, backFaceUR
         XmlUI = '',
         LuaScript = '',
         LuaScriptState = '',
-        CardID = _nextCardID(),
+        -- GUID = cardID,
+        -- CardID = _uniqueCardID(cardID),
         CustomDeck = {
             [1] = {
                 FaceURL = cardFaceImageURL,
@@ -226,7 +240,9 @@ local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
         }
     end
 
-    return spawnObjectData({ data = cardData })
+    Wait.frames(function()
+        spawnObjectData({ data = cardData })
+    end, 10)
 end
 
 local function spawnCard(cardOrIdentifier, position, rotation, scale, backFaceURL)
@@ -508,7 +524,7 @@ function DBOnSpawnTokensPressed()
         isToken = _hasValue(types, "Token")
 
         if isToken and not _hasValue(names, card.name) then
-            table.insert(names, card.name)
+            -- table.insert(names, card.name)
             card.cardIdentifier = cardID
             spawnHero(card, 1, nil)
         end
