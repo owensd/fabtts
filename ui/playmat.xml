@@ -1,0 +1,3 @@
+<Panel width="120" height="40" scale="0.15 0.15 0.15" position="-75 90 -15" rotation="0 0 180">
+  <Button icon="endturn-normal" highlightedSprite="endturn-over" pressedSprite="endturn-pressed" width="200" height="40" colors="rgba(0,0,0,0)|rgba(0,0,0,0)|rgba(0,0,0,0)|rgba(0,0,0,0)" onClick="PLOnPitchPressed" />
+</Panel>

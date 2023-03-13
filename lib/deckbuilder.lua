@@ -177,40 +177,6 @@ local function _cardMetadata(cardID, card, position, rotation, scale, backFaceUR
         end
     end
 
-    -- return {
-    --     Name = 'Card',
-    --     Nickname = card.name,
-    --     Description = cardDescriptionText,
-    --     Value = 0,
-    --     Tags = {},
-    --     Transform = {
-    --         posX = position.x, posY = position.y, posZ = position.z,
-    --         rotX = rotation.x, rotY = rotation.y, rotZ = rotation.z,
-    --         scaleX = scale.x, scaleY = scale.y, scaleZ = scale.z
-    --     },
-    --     ColorDiffuse = { r = 1, g = 1, b = 1 },
-    --     Locked = false,
-    --     Grid = true,
-    --     Snap = true,
-    --     Autoraise = true,
-    --     Sticky = true,
-    --     Tooltip = true,
-    --     GridProjection = false,
-    --     Hands = true,
-    --     HideWhenFaceDown = true,
-    --     CustomDeck = {
-    --         [1] = {
-    --             FaceURL = cardFaceImageURL,
-    --             BackURL = backFaceURL,
-    --             NumWidth = 1,
-    --             NumHeight = 1,
-    --             BackIsHidden = true,
-    --             UniqueBack = false,
-    --             Type = 0
-    --         }
-    --     }
-    -- }
-
     return {
         face = cardFaceImageURL,
         back = backFaceURL,
@@ -225,8 +191,6 @@ local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
 
     local cardData = _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
     local cardBack = OSCCardDB[cardID .. "-BACK"]
-
-    -- spawnObjectData({ data = cardData }, function(card) log("item spawned") end)
 
     local frontGUID = spawnObject({
         type = 'Card',

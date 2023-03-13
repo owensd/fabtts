@@ -11,6 +11,13 @@
         "OSCCardDB",
         "spawnObjectData",
         "Wait",
-        "destroyObject"
+        "destroyObject",
+        "broadcastToColor",
+        "Physics",
+        "onLoad",
+        "Player",
+        "onPlayerDisconnect",
+        "onPlayerConnect",
+        "assignPlayerToAvailableColor"
     ]
 }
