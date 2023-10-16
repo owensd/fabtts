@@ -1,0 +1,317 @@
+diff --cc lib/deckbuilder.lua
+index 8b94e8f,2133ffc..0000000
+--- a/lib/deckbuilder.lua
++++ b/lib/deckbuilder.lua
+@@@ -141,118 -131,186 +141,293 @@@ en
+
+  --[[ CARD SPAWNING --]]
+
+++<<<<<<< Updated upstream
+ +local function _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
+ +    local cardFaceImageURL = nil
+ +    local cardFaceImage = OSCImageDB[cardID]
+ +    if cardFaceImage ~= nil then
+ +        cardFaceImageURL = cardFaceImage.url
+ +    else
+ +        -- cardFaceImageURL = "https://d2h5owxb2ypf43.cloudfront.net/cards/" .. cardID .. ".png"
+ +        cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/2021591863531608584/C373576B1A7417AE484C84D6C146C36CD3235522/"
+ +        log("no local image found: " .. cardID)
+ +    end
+ +
+ +    -- Custom overrides for particular card images
+ +    if cardID == "ELE000" then
+ +        cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/1684898660861024963/80840508762EB0CAC1281D3304A06975EB09032F/"
+ +    end
+ +
+++=======
++ local function _cardInfo(card, backFaceURL, cardID)
++     -- fabdb.net uses a different `identifier` for cards... so use the override if present.
++     if cardID == nil then
++         cardID = card.cardIdentifier:upper()
++     end
++
+++>>>>>>> Stashed changes
+      if backFaceURL == nil then
+          backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
+ +        -- backFaceURL = "http://cloud-3.steamusercontent.com/ugc/1465311478988561488/365997716DD5087410C2FDA5F18293303B5511F5/"
+ +    end
+ +
+ +    local cardDescriptionText = card.functionalText
+ +    if cardDescriptionText == nil then
+ +        cardDescriptionText = card.text
+      end
+
+      local isLandscapeCard = false
+      local keywords = card.keywords
+      if not string.isNilOrEmpty(keywords) then
+++<<<<<<< Updated upstream
+ +        for _, keyword in pairs(string.split(keywords, ",")) do
+ +            if keyword ~= nil and keyword == "landmark" then
+ +                isLandscapeCard = true
+ +            end
+ +        end
+ +    end
+ +
+ +    return {
+++=======
++         -- for _, keyword in pairs(keywords) do
++         --     if keyword ~= nil and keyword == "landmark" then
++         --         isLandscapeCard = true
++         --     end
++         -- end
++     end
++
++     -- Custom overrides for particular card images
++     local cardFaceImageURL = card["image"]:split("?")[1]
++     cardFaceImageURL = cardFaceImageURL:gsub("webp", "png")
++     if cardID == "ELE000" then
++         cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/1684898660861024963/80840508762EB0CAC1281D3304A06975EB09032F/"
++     end
++
++     local cardDescriptionText = card["functionalText"]
++     if cardDescriptionText == nil then
++         cardDescriptionText = card["text"]
++     end
++
++     local dict = {
++         ["Name"] = "Card",
++         ["Nickname"] = card.name,
++         ["Description"]= cardDescriptionText,
++         ["SidewaysCard"] = isLandscapeCard,
++         ["CustomDeck"] = {
++             [1] = {
++                 ["FaceURL"] = cardFaceImageURL,
++                 ["BackURL"] = backFaceURL,
++                 ["NumWidth"] = 1,
++                 ["NumHeight"] = 1,
++                 ["BackIsHidden"] = true,
++                 ["UniqueBack"] = false,
++                 ["Type"] = 0
++             }
++         }
++     }
++ end
++
++ local function _objectInfoForCard(card, backFaceURL, cardID)
++     if backFaceURL == nil then
++         backFaceURL = "https://fabdb2.imgix.net/cards/backs/card-back-1.png"
++     end
++
++     local isLandscapeCard = false
++     local keywords = card.keywords
++     -- if keywords ~= nil then
++     --     for _, keyword in pairs(keywords) do
++     --         if keyword ~= nil and keyword == "landmark" then
++     --             isLandscapeCard = true
++     --         end
++     --     end
++     -- end
++
++     -- Custom overrides for particular card images
++     local cardFaceImageURL = card["image"]:split("?")[1]
++     cardFaceImageURL = cardFaceImageURL:gsub("webp", "png")
++     if cardID == "ELE000" then
++         cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/1684898660861024963/80840508762EB0CAC1281D3304A06975EB09032F/"
++     end
++
++     local extraObjectInfo = {
+++>>>>>>> Stashed changes
+          face = cardFaceImageURL,
+          back = backFaceURL,
+ -        sideways = isLandscapeCard
+ +        sideways = isLandscapeCard,
+ +        name = cardID .. " - " .. card.name,
+ +        description = cardDescriptionText
+      }
+++<<<<<<< Updated upstream
+++=======
++
++     local cardDescriptionText = card["functionalText"]
++     if cardDescriptionText == nil then
++         cardDescriptionText = card["text"]
++     end
++
++     return extraObjectInfo, cardDescriptionText
++ end
++
++ local function _spawnCard(card, position, rotation, backFaceURL, cardID)
++     -- fabdb.net uses a different `identifier` for cards... so use the override if present.
++     if cardID == nil then
++         cardID = card.cardIdentifier:upper()
++     end
++
++     local extraObjectInfo, cardDescriptionText = _objectInfoForCard(card, backFaceURL, cardID)
++
++     local objectInfo = {
++         type = "Card",
++         position = position,
++         rotation = rotation,
++         scale = { x = 1.5, y = 1.0, z = 1.5 },
++         callback_function = function(spawnedCard)
++             spawnedCard.setCustomObject(extraObjectInfo)
++             spawnedCard.setName(cardID .. " - " .. card["name"])
++             spawnedCard.setDescription(cardDescriptionText)
++             spawnedCard.reload()
++         end
++     }
++
++     --[[
++         if anyone else is trying to create stateful objects, you set the last state first with
++             last_state = last_obj.getData(), then last_state["States"] = {}
++                 and for each state, table.insert(last_state["States"], next_obj.getData()) .
++                 Finally spawnObjectData(last_state) to create the object (default state is the last one).
++                 This ordering avoids problems with the indices on the states.
++         ]]
++
++     -- Spawn the card!
++     -- local frontCard = spawnObject(objectInfo)
++
++     local cardInfo = _cardInfo(card, backFaceURL, cardID)
++     log(cardInfo)
++     spawnObjectData({
++         data = cardInfo,
++         position = position,
++         rotation = rotation,
++         scale = { x = 1.5, y = 1.0, z = 1.5 }
++     })
++
++     -- -- If the card is two-sided, then we need to spawn another card and merge the two states.
++     -- local cardBackID = cardID .. "-BACK"
++     -- local cardBack = OSCCardDB[cardBackID]
++     -- if cardBack ~= nil then
++     --     local extraObjectInfoBack, cardDescriptionTextBack = _objectInfoForCard(cardBack, backFaceURL, cardBackID)
++
++     --     local objectInfoBack = {
++     --         type = "Card",
++     --         position = { x = position.x + 10, y = position.y, z = position.z},
++     --         rotation = rotation,
++     --         scale = { x = 1.5, y = 1.0, z = 1.5 },
++     --         callback_function = function(spawnedCard)
++     --             spawnedCard.setCustomObject(extraObjectInfoBack)
++     --             spawnedCard.setName(cardBackID .. " - " .. cardBack["name"])
++     --             spawnedCard.setDescription(cardDescriptionTextBack)
++     --             spawnedCard.reload()
++     --         end
++     --     }
++
++     --     local backCard = spawnObject(objectInfoBack)
++     --     local deckGUID = backCard.getGUID()
++     --     local frontCardGUID = frontCard.getGUID()
++
++     --     Wait.frames(function()
++     --         log("try creating states for " .. deckGUID)
++     --         local back = getObjectFromGUID(deckGUID)
++     --         local front = getObjectFromGUID(frontCardGUID)
++     --         log("got front and back")
++     --         log(back)
++     --         log(front)
++     --         local data = back.getData()
++     --         data["States"] = {}
++     --         table.insert(data["States"], front.getData())
++     --         spawnObjectData({
++     --             data = data,
++     --             position = { x = position.x + 10, y = position.y, z = position.z},
++     --             rotation = rotation,
++     --             scale = { x = 1.5, y = 1.0, z = 1.5 }
++     --         })
++     --     end, 60)
++
++     --     -- log("try creating states")
++     --     -- local spawnedCardData = backCard.getData()
++     --     -- spawnedCardData["States"] = {}
++     --     -- table.insert(spawnedCardData["States"], frontCard.getData())
++     --     -- table.insert(spawnedCardData["States"], backCard.getData())
++     --     -- log(spawnedCardData)
++     --     -- spawnObjectData(spawnedCardData)
++     -- end
+++>>>>>>> Stashed changes
+  end
+
+ -local function spawnCard(cardOrIdentifier, position, rotation, backFaceURL)
+ +local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
+ +    -- Some cards are double-sided. Instead of spawning multiple cards to hide the back-side, states are used.
+ +
+ +    local cardData = _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
+ +    local cardBack = OSCCardDB[cardID .. "-BACK"]
+ +
+ +    local frontGUID = spawnObject({
+ +        type = 'Card',
+ +        position = position,
+ +        rotation = rotation,
+ +        scale = scale,
+ +        callback_function = function (spawned)
+ +            spawned.setCustomObject({
+ +                type = 0,
+ +                face = cardData.face,
+ +                back = cardData.back,
+ +                sideways = cardData.sideways
+ +            })
+ +            spawned.setName(cardData.name)
+ +            spawned.setDescription(cardData.description)
+ +            spawned.reload()
+ +        end
+ +    }).getGUID()
+ +
+ +    if cardBack ~= nil then
+ +        local cardBackData = _cardMetadata(cardID .. "-BACK", cardBack, position, rotation, scale, backFaceURL)
+ +        cardData["States"] = {
+ +            [1] = cardBackData
+ +        }
+ +
+ +        spawnObject({
+ +            type = 'Card',
+ +            position = position,
+ +            rotation = rotation,
+ +            scale = scale,
+ +            callback_function = function (spawned)
+ +                spawned.setCustomObject({
+ +                    type = 0,
+ +                    face = cardBackData.face,
+ +                    back = cardBackData.back,
+ +                    sideways = cardBackData.sideways
+ +                })
+ +                spawned.setName(cardBackData.name)
+ +                spawned.setDescription(cardBackData.description)
+ +                spawned.reload()
+ +
+ +                local backGUID = spawned.getGUID()
+ +
+ +                local lastState = getObjectFromGUID(frontGUID).getData()
+ +                lastState["States"] = {
+ +                    [1] = spawned.getData()
+ +                }
+ +
+ +                spawnObjectData({
+ +                    data = lastState,
+ +                    position = position,
+ +                    callback_function = function()
+ +                        destroyObject(getObjectFromGUID(backGUID))
+ +                        destroyObject(getObjectFromGUID(frontGUID))
+ +                    end
+ +                })
+ +            end
+ +        })
+ +    end
+ +end
+ +
+ +local function spawnCard(cardOrIdentifier, position, rotation, scale, backFaceURL)
+      -- Cards are dynamically created instead of cloned. This offers greater flexibility and less instances on the table.
+
+      if string.isNilOrEmpty(cardOrIdentifier.cardIdentifier) then
+@@@ -262,9 -320,12 +437,15 @@@
+
+          local cardData = OSCCardDB[cardID]
+          if cardData ~= nil then
+ -            _spawnCard(cardData, position, rotation, backFaceURL, cardID)
+ -            return
+ +            return _spawnCard(cardID, cardData, position, rotation, scale, backFaceURL)
+          else
+++<<<<<<< Updated upstream
+ +            return FABDBGetCardFromIdentifier(cardID, function(card) _spawnCard(cardID, card, position, rotation, scale, backFaceURL) end)
+++=======
++             -- Would be nice to pull from fabrary.net instead, but there's no API yet.
++             FABDBGetCardFromIdentifier(cardOrIdentifier:upper(), function(card) _spawnCard(card, position, rotation, backFaceURL, cardID) end)
++             return
+++>>>>>>> Stashed changes
+          end
+      end
