@@ -146,6 +146,8 @@ local function _cardMetadata(cardID, card, position, rotation, scale, backFaceUR
     local cardFaceImage = OSCImageDB[cardID]
     if cardFaceImage ~= nil then
         cardFaceImageURL = cardFaceImage.url
+    elseif card.image ~= nil then
+        cardFaceImageURL = card.image:gsub(".webp", ".png")
     else
         -- cardFaceImageURL = "https://d2h5owxb2ypf43.cloudfront.net/cards/" .. cardID .. ".png"
         cardFaceImageURL = "http://cloud-3.steamusercontent.com/ugc/2021591863531608584/C373576B1A7417AE484C84D6C146C36CD3235522/"
