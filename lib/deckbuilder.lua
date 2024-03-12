@@ -144,6 +144,7 @@ end
 local function _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
     local cardFaceImageURL = nil
     local cardFaceImage = OSCImageDB[cardID]
+
     if cardFaceImage ~= nil then
         cardFaceImageURL = cardFaceImage.url
     elseif card.image ~= nil then
@@ -179,18 +180,22 @@ local function _cardMetadata(cardID, card, position, rotation, scale, backFaceUR
         end
     end
 
+    local name = cardID
+    if card.name ~= nil then
+        name = name .. " - " .. card.name
+    end
+
     return {
         face = cardFaceImageURL,
         back = backFaceURL,
         sideways = isLandscapeCard,
-        name = cardID .. " - " .. card.name,
+        name = name,
         description = cardDescriptionText
     }
 end
 
 local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
     -- Some cards are double-sided. Instead of spawning multiple cards to hide the back-side, states are used.
-
     local cardData = _cardMetadata(cardID, card, position, rotation, scale, backFaceURL)
     local cardBack = OSCCardDB[cardID .. "-BACK"]
 
@@ -206,8 +211,12 @@ local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
                 back = cardData.back,
                 sideways = cardData.sideways
             })
-            spawned.setName(cardData.name)
-            spawned.setDescription(cardData.description)
+            if cardData.name ~= nil then
+                spawned.setName(cardData.name)
+            end
+            if cardData.description ~= nil then
+                spawned.setDescription(cardData.description)
+            end
             spawned.reload()
         end
     }).getGUID()
@@ -230,8 +239,12 @@ local function _spawnCard(cardID, card, position, rotation, scale, backFaceURL)
                     back = cardBackData.back,
                     sideways = cardBackData.sideways
                 })
-                spawned.setName(cardBackData.name)
-                spawned.setDescription(cardBackData.description)
+                if cardBackData.name ~= nil then
+                    spawned.setName(cardBackData.name)
+                end
+                if cardBackData.description ~= nil then
+                    spawned.setDescription(cardBackData.description)
+                end
                 spawned.reload()
 
                 local backGUID = spawned.getGUID()
@@ -358,6 +371,15 @@ local function loadDeckFromV1Format(resp)
     spawnHero(deck.hero_id, numHeroes, backFaceURL)
     numHeroes = numHeroes + 1
     for _, card in pairs(deck.weapons) do
+
+        log(card.image)
+
+        -- -- Use FaBDB's image source, if applicable...
+        -- if card.image ~= nil and string.match(card.image, "^cards") then
+        --     card.image = "https://fabdb2.imgix.net/" .. card.image
+        --     log(card.image)
+        -- end
+
         local num_to_spawn = card.count or 1
         for _ = 1, num_to_spawn do
             spawnWeapon(card.id, numWeapons, backFaceURL)
@@ -527,15 +549,21 @@ function DBOnSpawnTokensPressed()
     -- Some tokens are available in multiple sets so keep track and only spawn the first one found.
     local names = {}
 
-    for cardID, card in pairs(OSCCardDB) do
-        local isToken = false
-        local types = card.types:split(",")
-        isToken = _hasValue(types, "Token")
+    -- for cardID, card in pairs(OSCCardDB) do
+    --     local isToken = false
+    --     local types = card.types:split(",")
+    --     isToken = _hasValue(types, "Token")
 
-        if isToken and not _hasValue(names, card.name) then
-            -- table.insert(names, card.name)
-            card.cardIdentifier = cardID
-            spawnHero(card, 1, nil)
-        end
+    --     if isToken and not _hasValue(names, card.name) then
+    --         -- table.insert(names, card.name)
+    --         card.cardIdentifier = cardID
+    --         spawnHero(card, 1, nil)
+    --     end
+    -- end
+
+    for cardID, card in pairs(OSCImageDB) do
+        card.cardIdentifier = cardID
+        spawnHero(card, 1, nil)
     end
+
 end
